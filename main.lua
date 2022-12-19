@@ -20,6 +20,14 @@ function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
     canvas = love.graphics.newCanvas(window.x/window.scale, window.y/window.scale)
 
+    music = love.audio.newSource('audio.mp3', 'static')
+    static = love.audio.newSource('static.wav', 'static')
+    coin = love.audio.newSource('coin.wav', 'static')
+    music:setLooping(true)
+    static:setLooping(true)
+    static:setVolume(0.1)
+    love.audio.play(music)
+
     coins = {}
     particles = {}
     enemies = {}
@@ -46,7 +54,7 @@ end
 function love.update(dt)
     if not gameover then
         timer = timer + dt + dt*blast
-        score = score + 0.0001 + 0.001*blast
+        score = score + 0.0001 + 0.005*blast
         if math.random(1, 60-(40*(2/math.pi))*math.atan(timer/30)) == 1 then
             if math.random(1, 5) ~= 5 then
                 table.insert(coins, {world.x+20, math.random(10, world.y-10), 2, 1, {1, 1, 0}})
@@ -57,7 +65,7 @@ function love.update(dt)
         
         for i=1, math.random(1, math.floor(0.5+timer/60)) do
             if math.random(1, 60-(60*(2/math.pi))*math.atan(timer/30)) == 1 then
-                table.insert(enemies, {world.x+20, math.random(10, world.y-10)})
+                table.insert(enemies, {world.x+20, math.random(10, world.y-10), math.random(3+math.floor(timer/30), 10+math.floor(timer/30))})
             end
         end
         
@@ -102,6 +110,8 @@ function love.update(dt)
                     end
                 end
                 score = score + coins[i][4]
+                love.audio.stop(coin)
+                love.audio.play(coin)
                 table.remove(coins, i)
             elseif coins[i][1] < 0 then
                 table.remove(coins, i)
@@ -116,6 +126,8 @@ function love.update(dt)
             elseif math.sqrt((p.x-enemies[i][1])^2+(p.y-enemies[i][2])^2) < 15 then
                 table.remove(enemies, i)
                 gameover = true
+                love.audio.stop()
+                love.audio.play(static)
             else
                 enemies[i][1] = enemies[i][1] - todt(2+blast)*dt
             end
@@ -186,7 +198,7 @@ function love.draw()
 
         love.graphics.setColor(1, 0, 0)
         for i=1, #enemies do
-            love.graphics.circle('fill', enemies[i][1], enemies[i][2], 5)
+            love.graphics.circle('fill', enemies[i][1], enemies[i][2], enemies[i][3])
         end
     else
         
@@ -210,5 +222,5 @@ function love.keypressed(key)
     if key == 'escape' then love.event.quit() end 
     if key == 'a' then p.max = p.max + 0.1 end
     if key == 's' then p.max = p.max - 0.1 end
-    if key == 'r' and gameover then love.load() end
+    if key == 'r' and gameover then love.load(); love.audio.stop(); love.audio.play(music) end
 end
